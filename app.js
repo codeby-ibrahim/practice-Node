@@ -1,23 +1,30 @@
 const express = require('express');
-const cookieParser = require('cookie-parser');
-const path = require('path');
-
 const app = express();
-
-app.set('view engine', 'ejs');
-
-// Set views folder explicitly (recommended)
-app.set('views', path.join(__dirname, 'views'));
+const userModel = require('./models/user');
+const postModel = require('./models/post');
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(cookieParser());
 
 app.get('/', (req, res) => {
-    res.render('index');  // ✅ Correct
+    res.send('Hello, world!');
+});
+
+app.get('/create', async (req, res) => {
+    try {
+        // Create a new user
+        let user = await userModel.create({
+            username: "ibrahim",
+            age: 24,
+            email: "ibrahim@gmail.com"
+        });
+
+        res.status(201).send(user); // send created user as response
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error creating user');
+    }
 });
 
 app.listen(3000, () => {
-    console.log("Server running on port 3000");
+    console.log('Server running on port 3000');
 });
