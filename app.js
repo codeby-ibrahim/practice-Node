@@ -1,8 +1,8 @@
-const express = require('Express');
+const express = require('express');
 const app = express();
 
 app.get('/', (req, res) => {
     res.send('Well come')
 })
 
-app.listen(3000)
+app.listen(3000);
