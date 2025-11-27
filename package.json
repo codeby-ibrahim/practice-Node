@@ -5,9 +5,17 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codeby-ibrahim/practice-Node.git"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/codeby-ibrahim/practice-Node/issues"
+  },
+  "homepage": "https://github.com/codeby-ibrahim/practice-Node#readme",
   "description": "",
   "dependencies": {
     "bcrypt": "^6.0.0",
