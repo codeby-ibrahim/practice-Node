@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <h1>Task Manager</h1>
+    <%- include('partials/header') %>
+        <form action="/tasks" method="POST">
+            <input type="text" name="title" placeholder="Task Title" required>
+            <input type="text" name="description" placeholder="Description">
+            <button type="submit">Add Task</button>
+        </form>
+
+        <ul>
+            <% tasks.forEach(task=> { %>
+                <li>
+                    <strong>
+                        <%= task.title %>
+                    </strong> - <%= task.status %>
+                        <a href="/tasks/edit/<%= task._id %>">Edit</a>
+                        <form action="/tasks/<%= task._id %>?_method=DELETE" method="POST" style="display:inline;">
+                            <button type="submit">Delete</button>
+                        </form>
+                </li>
+                <% }) %>
+        </ul>
+</body>
+
+</html>

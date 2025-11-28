@@ -1,119 +1,77 @@
+// app.js
 const express = require('express');
+const mongoose = require('mongoose');
+const methodOverride = require('method-override');
+const Task = require('./models/Task.js'); // Make sure this file exists
+
 const app = express();
-const userModel = require('./models/user');
-const postModel = require('./models/post');
 
-const cookieParser = require('cookie-parser');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-
+// ====== Middleware ======
 app.set('view engine', 'ejs');
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(express.static('public'));
+app.use(express.urlencoded({ extended: true })); // replaces body-parser
+app.use(methodOverride('_method'));
 
-// Home Page
-app.get('/', (req, res) => {
-    res.render('index');
-});
+// ====== MongoDB Connection ======
+mongoose.connect('YOUR_MONGO_URI_HERE', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
+    .then(() => console.log('MongoDB Connected'))
+    .catch(err => console.log(err));
 
-// Login Page
-app.get('/login', (req, res) => {
-    res.render('login');
-});
+// ====== Routes ======
 
-// Login POST
-app.post('/login', async (req, res) => {
-    let { email, password } = req.body;
-
+// Home route - list all tasks
+app.get('/', async (req, res) => {
     try {
-        const user = await userModel.findOne({ email });
-        if (!user) return res.send("User not found");
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.send("Incorrect password");
-
-        // JWT Token
-        let token = jwt.sign(
-            { userId: user._id, email: user.email },
-            "shhhh",
-            { expiresIn: '1h' }
-        );
-
-        // Set cookie
-        res.cookie("token", token, { httpOnly: true });
-
-        // Redirect to profile
-        res.redirect('/profile');
-
+        const tasks = await Task.find();
+        res.render('index', { tasks });
     } catch (err) {
-        console.log(err);
-        res.status(500).send("Server error");
+        res.status(500).send(err.message);
     }
 });
 
-// ---------------------------
-// Profile Route (Protected)
-// ---------------------------
-
-// Middleware to check JWT
-function authMiddleware(req, res, next) {
-    const token = req.cookies.token;
-    if (!token) return res.redirect('/login');
-
+// Create a new task
+app.post('/tasks', async (req, res) => {
     try {
-        const decoded = jwt.verify(token, "shhhh");
-        req.user = decoded; // userId and email available
-        next();
+        await Task.create(req.body);
+        res.redirect('/');
     } catch (err) {
-        res.redirect('/login');
-    }
-}
-
-// Profile Page
-app.get('/profile', authMiddleware, async (req, res) => {
-    try {
-        const user = await userModel.findById(req.user.userId);
-        if (!user) return res.redirect('/login'); // fixed redirect from /profile to /login
-
-        res.render('profile', { user }); // profile.ejs render
-    } catch (err) {
-        res.status(500).send("Server error");
+        res.status(500).send(err.message);
     }
 });
 
-// LOGOUT ROUTE
-app.get('/logout', (req, res) => {
-    res.clearCookie('token');
-    res.redirect('/login'); // redirect to login after logout
+// Edit task page
+app.get('/tasks/edit/:id', async (req, res) => {
+    try {
+        const task = await Task.findById(req.params.id);
+        res.render('edit', { task });
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
 });
 
-// REGISTER ROUTE
-app.post('/register', async (req, res) => {
-    let { name, email, password, username, age } = req.body;
-
-    bcrypt.genSalt(10, (err, salt) => {
-        bcrypt.hash(password, salt, async (err, hash) => {
-
-            let user = await userModel.create({
-                name,
-                username,
-                email,
-                age,
-                password: hash,
-            });
-
-            let token = jwt.sign(
-                { email: user.email, userId: user._id },
-                "shhhh"
-            );
-
-            res.cookie("token", token);
-            res.redirect('/profile'); // redirect to profile after registration
-        });
-    });
+// Update task
+app.put('/tasks/:id', async (req, res) => {
+    try {
+        await Task.findByIdAndUpdate(req.params.id, req.body);
+        res.redirect('/');
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
 });
 
-app.listen(3000, () => {
-    console.log("Server running on port 3000");
+// Delete task
+app.delete('/tasks/:id', async (req, res) => {
+    try {
+        await Task.findByIdAndDelete(req.params.id);
+        res.redirect('/');
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
 });
+
+// ====== Start Server ======
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
